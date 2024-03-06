@@ -1,10 +1,25 @@
-from flask import Flask
+import dash
+from dash import dcc, html
+import plotly.express as px
+import pandas as pd
 
-app = Flask(__name__)
+# Sample data
+df = pd.DataFrame({
+    "X": [1, 2, 3, 4, 5],
+    "Y": [2, 3, 5, 7, 11]
+})
 
-@app.route('/')
-def hello():
-    return "Hi, this is elong."
+# Initialize the Dash app
+app = dash.Dash(__name__)
 
+# Define the layout of the app
+app.layout = html.Div([
+    dcc.Graph(
+        id='scatter-plot',
+        figure=px.scatter(df, x='X', y='Y', title='Scatter Plot').update_traces(mode='markers')
+    )
+])
+
+# Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run_server(debug=True)
