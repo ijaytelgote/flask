@@ -17,4 +17,3 @@ dash-renderer==1.9.1
 dash-table==5.0.0
 plotly==5.10.0
 dependency-dash==0.1.0b1
-dash-core-components==2.0.0
