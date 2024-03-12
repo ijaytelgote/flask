@@ -1,7 +1,9 @@
 
-
+import os
 import random
+
 import dash
+import duckdb
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -10,12 +12,14 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from faker import Faker
 from langchain.agents.agent_types import AgentType
-from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-from langchain_openai import ChatOpenAI
-import pandas as pd
-from langchain_openai import OpenAI
-import os
-fake = Faker()
+from langchain_experimental.agents.agent_toolkits import \
+    create_pandas_dataframe_agent
+from langchain_openai import ChatOpenAI, OpenAI
+from pandasai import SmartDataframe
+from pandasai.llm import OpenAI
+from textblob import TextBlob
+
+os.environ["OPENAI_API_KEY"] = "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"
 
 class VisualizationDashboard:
     def __init__(self):
@@ -28,6 +32,7 @@ class VisualizationDashboard:
 
     def generate_fake_data(self, rows=100):
         data = []
+        fake = Faker()  # Create an instance of the Faker class
 
         for _ in range(rows):
             row = {
@@ -55,6 +60,7 @@ class VisualizationDashboard:
             data.append(row)
 
         df = pd.DataFrame(data)
+
         return df
 
     def create_scatter_layout(self):
@@ -188,22 +194,13 @@ class VisualizationDashboard:
             ], style={'width': '80%', 'margin': 'auto'}),
         ], style={'textAlign': 'center'})
 
-# Create Dash app instance
-
-os.environ["OPENAI_API_KEY"] = "key"
-
-agent = create_pandas_dataframe_agent(OpenAI(temperature=0), path_of_data, verbose=True)
-agent = create_pandas_dataframe_agent(
-    ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613"),
-    path_of_data,
-    verbose=True,
-    agent_type=AgentType.OPENAI_FUNCTIONS,
-)
-
+# Initialize the Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 dashboard = VisualizationDashboard()
 
-# Define layout for SmartDataFrame chat
+
+# Define layout for SmartDataFrame interaction page
+
 smartdata_layout = html.Div(children=[
     html.H1("SmartDataFrame Chat", style={'textAlign': 'center', 'fontSize': 36, 'marginBottom': 30, 'color': '#333'}),
     dcc.Input(id='user-input', type='text', placeholder='Enter your query...', style={'width': '100%', 'padding': '15px', 'fontSize': '18px', 'marginBottom': '20px', 'borderRadius': '8px', 'border': '1px solid #ccc', 'outline': 'none'}),
@@ -233,6 +230,7 @@ default_layout = html.Div([
     [Input('url', 'pathname')]
 )
 def display_page(pathname):
+    
     if pathname == '/talk_to_data':
         return smartdata_layout
     else:
@@ -244,21 +242,42 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
+# Define function for sentiment analysis using TextBlob
+
+
+agent = create_pandas_dataframe_agent(OpenAI(temperature=0), dashboard.data, verbose=True)
+
+
 # Define callback to interact with SmartDataFrame
+# Define callback to handle user input and display output
 @app.callback(
     Output('output', 'children'),
     [Input('analyse-button', 'n_clicks'),
      Input('refresh-button', 'n_clicks')],
     [State('user-input', 'value')]
 )
+
 def update_smartdata_analysis(analyse_clicks, refresh_clicks, user_input):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
     if 'analyse-button' in changed_id and analyse_clicks > 0 and user_input:
-        # Perform analysis here
-        pass  # Placeholder for analysis logic
+        try:
+            response = agent.run(user_input)
+        except duckdb.duckdb.IOException as e:
+            return html.P(f"Error: {e}")
+        
+        if isinstance(response, pd.DataFrame):
+            # If the response is a DataFrame, create a scatter plot
+            fig = px.scatter(response, x=response.columns[0], y=response.columns[1], title=user_input)
+            return dcc.Graph(figure=fig)
+        else:
+            # If the response is text, display it as-is
+            return html.P(response)
     elif 'refresh-button' in changed_id and refresh_clicks > 0:
+        # Add refresh functionality here
+        # For demonstration purposes, we'll just display a message
         return html.P("Data refreshed!")
     return ""
+
 
 # Scatter Plot Callback
 @app.callback(
@@ -372,5 +391,3 @@ def update_histogram(column, bins):
 
     return {'data': histogram_data, 'layout': layout}, explanation_text
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
