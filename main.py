@@ -1,15 +1,22 @@
 
-import random
 
+import random
 import dash
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from faker import Faker
-
+from pandasai.llm import OpenAI
+from textblob import TextBlob
+from langchain.agents.agent_types import AgentType
+from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
+from langchain_openai import ChatOpenAI
+import pandas as pd
+from langchain_openai import OpenAI
+import os
 fake = Faker()
 
 class VisualizationDashboard:
@@ -183,9 +190,18 @@ class VisualizationDashboard:
             ], style={'width': '80%', 'margin': 'auto'}),
         ], style={'textAlign': 'center'})
 
-# Initialize the Dash app
+# Create Dash app instance
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 dashboard = VisualizationDashboard()
+
+# Define layout for SmartDataFrame chat
+smartdata_layout = html.Div(children=[
+    html.H1("SmartDataFrame Chat", style={'textAlign': 'center', 'fontSize': 36, 'marginBottom': 30, 'color': '#333'}),
+    dcc.Input(id='user-input', type='text', placeholder='Enter your query...', style={'width': '100%', 'padding': '15px', 'fontSize': '18px', 'marginBottom': '20px', 'borderRadius': '8px', 'border': '1px solid #ccc', 'outline': 'none'}),
+    html.Button('Analyse', id='analyse-button', n_clicks=0, style={'backgroundColor': '#4CAF50', 'border': 'none', 'color': 'white', 'padding': '15px 32px', 'textAlign': 'center', 'textDecoration': 'none', 'display': 'inline-block', 'fontSize': '16px', 'marginBottom': '20px', 'cursor': 'pointer', 'borderRadius': '8px'}),
+    html.Button('Refresh', id='refresh-button', n_clicks=0, style={'backgroundColor': '#008CBA', 'border': 'none', 'color': 'white', 'padding': '15px 32px', 'textAlign': 'center', 'textDecoration': 'none', 'display': 'inline-block', 'fontSize': '16px', 'marginBottom': '20px', 'marginLeft': '10px', 'cursor': 'pointer', 'borderRadius': '8px'}),
+    html.Div(id='output', style={'width': '100%', 'padding': '15px', 'fontSize': '16px', 'marginBottom': '20px', 'borderRadius': '8px', 'border': '1px solid #ccc', 'outline': 'none', 'height': '200px', 'overflowY': 'scroll'})
+])
 
 # Define layout for default page
 default_layout = html.Div([
@@ -201,6 +217,39 @@ default_layout = html.Div([
     html.Hr(),
     dashboard.create_histogram_layout()
 ])
+
+# Define callback to update layout based on path
+@app.callback(
+    Output('page-content', 'children'),
+    [Input('url', 'pathname')]
+)
+def display_page(pathname):
+    if pathname == '/talk_to_data':
+        return smartdata_layout
+    else:
+        return default_layout
+
+# Define the main app layout
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
+
+# Define callback to interact with SmartDataFrame
+@app.callback(
+    Output('output', 'children'),
+    [Input('analyse-button', 'n_clicks'),
+     Input('refresh-button', 'n_clicks')],
+    [State('user-input', 'value')]
+)
+def update_smartdata_analysis(analyse_clicks, refresh_clicks, user_input):
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    if 'analyse-button' in changed_id and analyse_clicks > 0 and user_input:
+        # Perform analysis here
+        pass  # Placeholder for analysis logic
+    elif 'refresh-button' in changed_id and refresh_clicks > 0:
+        return html.P("Data refreshed!")
+    return ""
 
 # Scatter Plot Callback
 @app.callback(
@@ -313,8 +362,6 @@ def update_histogram(column, bins):
     explanation_text = f"The histogram above displays the distribution of {column.lower()} with {bins} bins."
 
     return {'data': histogram_data, 'layout': layout}, explanation_text
-
-app.layout = default_layout
 
 if __name__ == '__main__':
     app.run_server(debug=True)
