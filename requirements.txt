@@ -21,3 +21,4 @@ polar==0.0.127
 pandas==1.5.3
 langchain_experimental
 langchain-openai
+langchain
