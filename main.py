@@ -18,7 +18,7 @@ from langchain_openai import ChatOpenAI, OpenAI
 
 from textblob import TextBlob
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "api"
 
 class VisualizationDashboard:
     def __init__(self):
@@ -221,7 +221,7 @@ default_layout = html.Div([
     dashboard.create_choropleth_layout(),
     html.Hr(),
     dashboard.create_histogram_layout()
-])
+],id='page-content')
 
 # Define callback to update layout based on path
 @app.callback(
