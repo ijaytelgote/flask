@@ -189,6 +189,17 @@ class VisualizationDashboard:
         ], style={'textAlign': 'center'})
 
 # Create Dash app instance
+
+os.environ["OPENAI_API_KEY"] = "key"
+
+agent = create_pandas_dataframe_agent(OpenAI(temperature=0), path_of_data, verbose=True)
+agent = create_pandas_dataframe_agent(
+    ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613"),
+    path_of_data,
+    verbose=True,
+    agent_type=AgentType.OPENAI_FUNCTIONS,
+)
+
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 dashboard = VisualizationDashboard()
 
