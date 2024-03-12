@@ -244,7 +244,12 @@ app.layout = html.Div([
 # Define function for sentiment analysis using TextBlob
 
 
-agent = create_pandas_dataframe_agent(OpenAI(temperature=0), dashboard.data, verbose=True)
+agent = create_pandas_dataframe_agent(
+    ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613"),
+    dashboard.data,
+    verbose=True,
+    agent_type=AgentType.OPENAI_FUNCTIONS,
+)
 
 
 # Define callback to interact with SmartDataFrame
