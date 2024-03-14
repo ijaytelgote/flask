@@ -1,6 +1,6 @@
 import os
 import random
-
+import tabulate
 import dash
 import duckdb
 import numpy as np
