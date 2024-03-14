@@ -14,9 +14,6 @@ from langchain.agents.agent_types import AgentType
 from langchain_experimental.agents.agent_toolkits import \
     create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI, OpenAI
-from pandasai import SmartDataframe
-from pandasai.llm import OpenAI
-from textblob import TextBlob
 
 os.environ["OPENAI_API_KEY"] = "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"
 
