@@ -19,6 +19,7 @@ dash-table==5.0.0
 plotly==5.10.0
 textblob==0.18.0.post0
 polar==0.0.127
+tabulate
 pandas==1.5.3
 langchain_experimental
 langchain-openai
